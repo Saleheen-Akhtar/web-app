@@ -1,0 +1,49 @@
+import axios from 'axios';
+
+const API_URL = 'http://localhost:8000/api/';
+
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+});
+
+export const login = async (username, password) => {
+    // For Basic Auth, we can set the Authorization header directly
+    // Or we can just store the credentials and send them with every request
+    // Since we are using Basic Auth for simplicity:
+    const token = btoa(`${username}:${password}`);
+    api.defaults.headers.common['Authorization'] = `Basic ${token}`;
+    // Test the credentials
+    try {
+        await api.get('history/'); // Just a check
+        return true;
+    } catch (error) {
+        delete api.defaults.headers.common['Authorization'];
+        throw error;
+    }
+};
+
+export const uploadFile = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post('upload/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const getDashboard = (uploadId = null) => {
+  const url = uploadId ? `dashboard/${uploadId}/` : 'dashboard/';
+  return api.get(url);
+};
+
+export const getHistory = () => {
+  return api.get('history/');
+};
+
+export const getReportUrl = (uploadId) => {
+  return `${API_URL}report/${uploadId}/`;
+};
+
+export default api;
