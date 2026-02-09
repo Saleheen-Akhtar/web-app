@@ -8,14 +8,10 @@ const api = axios.create({
 });
 
 export const login = async (username, password) => {
-    // For Basic Auth, we can set the Authorization header directly
-    // Or we can just store the credentials and send them with every request
-    // Since we are using Basic Auth for simplicity:
-    const token = btoa(`${username}:${password}`);
-    api.defaults.headers.common['Authorization'] = `Basic ${token}`;
-    // Test the credentials
     try {
-        await api.get('history/'); // Just a check
+        const response = await api.post('token-auth/', { username, password });
+        const token = response.data.token;
+        api.defaults.headers.common['Authorization'] = `Token ${token}`;
         return true;
     } catch (error) {
         delete api.defaults.headers.common['Authorization'];
