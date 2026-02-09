@@ -2,10 +2,13 @@ import pandas as pd
 from django.db import transaction
 from django.http import HttpResponse, Http404
 from django.db.models import Avg, Count
+from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny
+from rest_framework.authtoken.models import Token
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import io
@@ -13,13 +16,37 @@ import io
 from .models import Upload, EquipmentData
 from .serializers import UploadSerializer, UploadListSerializer, EquipmentDataSerializer
 
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username', '').strip()
+        email = request.data.get('email', '').strip()
+        password = request.data.get('password', '').strip()
+
+        if not username or not password:
+            return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username=username).exists():
+            return Response({'error': 'A user with that username already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if email and User.objects.filter(email=email).exists():
+            return Response({'error': 'A user with that email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.create_user(username=username, email=email, password=password)
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response({'token': token.key, 'username': user.username}, status=status.HTTP_201_CREATED)
+
 class UploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):
         file_serializer = UploadSerializer(data=request.data)
         if file_serializer.is_valid():
-            upload_instance = file_serializer.save()
+            original_name = request.FILES['file'].name if 'file' in request.FILES else ''
+            upload_instance = file_serializer.save(original_filename=original_name)
 
             try:
                 # Parse CSV
@@ -57,6 +84,15 @@ class UploadView(APIView):
 class UploadListView(generics.ListAPIView):
     queryset = Upload.objects.all().order_by('-uploaded_at')
     serializer_class = UploadListSerializer
+
+class DeleteUploadView(APIView):
+    def delete(self, request, upload_id):
+        try:
+            upload = Upload.objects.get(id=upload_id)
+            upload.delete()
+            return Response({"message": "Upload deleted successfully."}, status=status.HTTP_200_OK)
+        except Upload.DoesNotExist:
+            return Response({"error": "Upload not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class DashboardView(APIView):
     def get(self, request, upload_id=None):

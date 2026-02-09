@@ -11,10 +11,10 @@ class UploadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Upload
-        fields = ['id', 'file', 'uploaded_at', 'equipment_data']
-        read_only_fields = ['uploaded_at', 'equipment_data']
+        fields = ['id', 'file', 'original_filename', 'uploaded_at', 'equipment_data']
+        read_only_fields = ['uploaded_at', 'equipment_data', 'original_filename']
 
 class UploadListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Upload
-        fields = ['id', 'file', 'uploaded_at']
+        fields = ['id', 'file', 'original_filename', 'uploaded_at']

@@ -5,6 +5,7 @@ import os
 
 class Upload(models.Model):
     file = models.FileField(upload_to='uploads/')
+    original_filename = models.CharField(max_length=255, blank=True, default='')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
