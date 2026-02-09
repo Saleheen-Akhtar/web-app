@@ -9,6 +9,7 @@ env/
 # Django
 db.sqlite3
 media/
+uploads/
 
 # Node
 node_modules/
