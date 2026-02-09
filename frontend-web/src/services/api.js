@@ -4,7 +4,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/';
 
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
 });
 
 export const login = async (username, password) => {
@@ -17,6 +16,13 @@ export const login = async (username, password) => {
         delete api.defaults.headers.common['Authorization'];
         throw error;
     }
+};
+
+export const register = async (username, email, password) => {
+    const response = await api.post('register/', { username, email, password });
+    const token = response.data.token;
+    api.defaults.headers.common['Authorization'] = `Token ${token}`;
+    return response.data;
 };
 
 export const uploadFile = (file) => {
@@ -36,6 +42,10 @@ export const getDashboard = (uploadId = null) => {
 
 export const getHistory = () => {
   return api.get('history/');
+};
+
+export const deleteUpload = (uploadId) => {
+  return api.delete(`upload/${uploadId}/`);
 };
 
 export const getReportUrl = (uploadId) => {
